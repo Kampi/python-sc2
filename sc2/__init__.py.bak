@@ -17,5 +17,4 @@ from . import maps
 from . import helpers
 from .data import *
 from .bot_ai import BotAI
-from .bot_ai_custom import BotAI_custom
 from .main import run_game
