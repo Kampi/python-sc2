@@ -3,16 +3,15 @@ import random
 from .unit import Unit
 from .ids.unit_typeid import UnitTypeId
 from .position import Point2, Point3
-from typing import List, Dict, Set, Tuple, Any, Optional, Union # mypy type checking
+from typing import List, Dict, Set, Tuple, Any, Optional, Union  # mypy type checking
+
 
 class Units(list):
     """A collection for units. Makes it easy to select units by selectors."""
+
     @classmethod
     def from_proto(cls, units, game_data):
-        return cls(
-            (Unit(u, game_data) for u in units),
-            game_data
-        )
+        return cls((Unit(u, game_data) for u in units), game_data)
 
     def __init__(self, units, game_data):
         super().__init__(units)
@@ -68,7 +67,7 @@ class Units(list):
         assert self.exists
         return self[0]
 
-    def take(self, n: int, require_all: bool=True) -> "Units":
+    def take(self, n: int, require_all: bool = True) -> "Units":
         assert (not require_all) or len(self) >= n
         return self[:n]
 
@@ -132,7 +131,7 @@ class Units(list):
     def filter(self, pred: callable) -> "Units":
         return self.subgroup(filter(pred, self))
 
-    def sorted(self, keyfn: callable, reverse: bool=False) -> "Units":
+    def sorted(self, keyfn: callable, reverse: bool = False) -> "Units":
         return self.subgroup(sorted(self, key=keyfn, reverse=reverse))
 
     def tags_in(self, other: Union[Set[int], List[int], Dict[int, Any]]) -> "Units":
@@ -158,7 +157,9 @@ class Units(list):
             other = set(other)
         return self.filter(lambda unit: unit.type_id in other)
 
-    def exclude_type(self, other: Union[UnitTypeId, Set[UnitTypeId], List[UnitTypeId], Dict[UnitTypeId, Any]]) -> "Units":
+    def exclude_type(
+        self, other: Union[UnitTypeId, Set[UnitTypeId], List[UnitTypeId], Dict[UnitTypeId, Any]]
+    ) -> "Units":
         """ Filters all units that are not of a specific type """
         # example: self.known_enemy_units.exclude_type([OVERLORD])
         if isinstance(other, UnitTypeId):
@@ -171,8 +172,12 @@ class Units(list):
     def center(self) -> Point2:
         """ Returns the central point of all units in this list """
         assert self.exists
-        pos = Point2((sum([unit.position.x for unit in self]) / self.amount, \
-            sum([unit.position.y for unit in self]) / self.amount))
+        pos = Point2(
+            (
+                sum([unit.position.x for unit in self]) / self.amount,
+                sum([unit.position.y for unit in self]) / self.amount,
+            )
+        )
         return pos
 
     @property

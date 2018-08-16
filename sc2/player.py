@@ -24,12 +24,14 @@ class AbstractPlayer(object):
         if type == PlayerType.Computer:
             self.difficulty = difficulty
 
+
 class Human(AbstractPlayer):
     def __init__(self, race):
         super().__init__(PlayerType.Participant, race)
 
     def __str__(self):
         return f"Human({self.race})"
+
 
 class Bot(AbstractPlayer):
     def __init__(self, race, ai):
@@ -44,6 +46,7 @@ class Bot(AbstractPlayer):
     def __str__(self):
         return f"Bot({self.race}, {self.ai})"
 
+
 class Computer(AbstractPlayer):
     def __init__(self, race, difficulty=Difficulty.Easy):
         super().__init__(PlayerType.Computer, race, difficulty)
@@ -51,12 +54,14 @@ class Computer(AbstractPlayer):
     def __str__(self):
         return f"Computer({self.race}, {self.difficulty})"
 
+
 class Observer(AbstractPlayer):
     def __init__(self):
         super().__init__(PlayerType.Observer)
 
     def __str__(self):
         return f"Observer()"
+
 
 class Player(AbstractPlayer):
     @classmethod
@@ -68,7 +73,7 @@ class Player(AbstractPlayer):
             PlayerType(proto.type),
             Race(proto.race_requested),
             Difficulty(proto.difficulty) if proto.HasField("difficulty") else None,
-            Race(proto.race_actual) if proto.HasField("race_actual") else None
+            Race(proto.race_actual) if proto.HasField("race_actual") else None,
         )
 
     def __init__(self, player_id, type, requested_race, difficulty=None, actual_race=None):

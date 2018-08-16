@@ -1,15 +1,17 @@
 from math import sqrt, pi, sin, cos, atan2
 import random
 import itertools
-from typing import List, Dict, Set, Tuple, Any, Optional, Union # for mypy type checking
+from typing import List, Dict, Set, Tuple, Any, Optional, Union  # for mypy type checking
 
 FLOAT_DIGITS = 8
-EPSILON = 10**(-FLOAT_DIGITS)
+EPSILON = 10 ** (-FLOAT_DIGITS)
+
 
 def _sign(num):
     if num == 0:
         return 0
     return 1 if num > 0 else -1
+
 
 class Pointlike(tuple):
     @property
@@ -25,7 +27,7 @@ class Pointlike(tuple):
         assert isinstance(p, Pointlike)
         if self == p:
             return 0
-        return sqrt(sum(self.__class__((b-a)**2 for a, b in itertools.zip_longest(self, p, fillvalue=0))))
+        return sqrt(sum(self.__class__((b - a) ** 2 for a, b in itertools.zip_longest(self, p, fillvalue=0))))
 
     def sort_by_distance(self, ps):
         return sorted(ps, key=lambda p: self.distance_to(p))
@@ -47,17 +49,21 @@ class Pointlike(tuple):
         return max(ps, key=lambda p: self.distance_to(p)).distance_to(self)
 
     def offset(self, p) -> "Pointlike":
-        return self.__class__(a+b for a, b in itertools.zip_longest(self, p[:len(self)], fillvalue=0))
+        return self.__class__(a + b for a, b in itertools.zip_longest(self, p[: len(self)], fillvalue=0))
 
     def unit_axes_towards(self, p):
-        return self.__class__(_sign(b - a) for a, b in itertools.zip_longest(self, p[:len(self)], fillvalue=0))
+        return self.__class__(_sign(b - a) for a, b in itertools.zip_longest(self, p[: len(self)], fillvalue=0))
 
-    def towards(self, p: Union["Unit", "Pointlike"], distance: Union[int, float]=1, limit: bool=False) -> "Pointlike":
+    def towards(
+        self, p: Union["Unit", "Pointlike"], distance: Union[int, float] = 1, limit: bool = False
+    ) -> "Pointlike":
         assert self != p
         d = self.distance_to(p)
         if limit:
             distance = min(d, distance)
-        return self.__class__(a + (b - a) / d * distance for a, b in itertools.zip_longest(self, p[:len(self)], fillvalue=0))
+        return self.__class__(
+            a + (b - a) / d * distance for a, b in itertools.zip_longest(self, p[: len(self)], fillvalue=0)
+        )
 
     def __eq__(self, other):
         if not isinstance(other, tuple):
@@ -65,7 +71,7 @@ class Pointlike(tuple):
         return all(abs(a - b) < EPSILON for a, b in itertools.zip_longest(self, other, fillvalue=0))
 
     def __hash__(self):
-        return hash(tuple(int(c * FLOAT_DIGITS)  for c in self))
+        return hash(tuple(int(c * FLOAT_DIGITS) for c in self))
 
 
 class Point2(Pointlike):
@@ -90,7 +96,7 @@ class Point2(Pointlike):
         return Point3((*self, 0))
 
     def random_on_distance(self, distance):
-        if isinstance(distance, (tuple, list)): # interval
+        if isinstance(distance, (tuple, list)):  # interval
             distance = distance[0] + random.random() * (distance[1] - distance[0])
 
         assert distance > 0
@@ -99,7 +105,7 @@ class Point2(Pointlike):
         dx, dy = cos(angle), sin(angle)
         return Point2((self.x + dx * distance, self.y + dy * distance))
 
-    def towards_with_random_angle(self, p, distance=1, max_difference=(pi/4)):
+    def towards_with_random_angle(self, p, distance=1, max_difference=(pi / 4)):
         tx, ty = self.to2.towards(p.to2, 1)
         angle = atan2(ty - self.y, tx - self.x)
         angle = (angle - max_difference) + max_difference * 2 * random.random()
@@ -112,7 +118,7 @@ class Point2(Pointlike):
         distanceBetweenPoints = self.distance_to(p)
         assert r > distanceBetweenPoints / 2
         # remaining distance from center towards the intersection, using pythagoras
-        remainingDistanceFromCenter = (r**2 - (distanceBetweenPoints/2)**2)**0.5
+        remainingDistanceFromCenter = (r ** 2 - (distanceBetweenPoints / 2) ** 2) ** 0.5
         # center of both points
         offsetToCenter = Point2(((p.x - self.x) / 2, (p.y - self.y) / 2))
         center = self.offset(offsetToCenter)
@@ -161,6 +167,7 @@ class Point3(Point2):
     def to3(self) -> "Point3":
         return Point3(self)
 
+
 class Size(Point2):
     @property
     def width(self):
@@ -169,6 +176,7 @@ class Size(Point2):
     @property
     def height(self):
         return self[1]
+
 
 class Rect(tuple):
     @classmethod
@@ -201,4 +209,4 @@ class Rect(tuple):
         return Point2((self.x + self.width / 2, self.y + self.height / 2))
 
     def offset(self, p):
-        return self.__class__((self[0]+p[0], self[1]+p[1], self[2], self[3]))
+        return self.__class__((self[0] + p[0], self[1] + p[1], self[2], self[3]))
