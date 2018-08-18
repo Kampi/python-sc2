@@ -4,7 +4,7 @@ from s2clientprotocol import (
     raw_pb2 as raw_pb,
     data_pb2 as data_pb,
     common_pb2 as common_pb,
-    error_pb2 as error_pb
+    error_pb2 as error_pb,
 )
 from .ids.unit_typeid import PROBE, SCV, DRONE
 from .ids.unit_typeid import NEXUS
@@ -18,7 +18,7 @@ from .ids.ability_id import (
     GATEWAYTRAIN_HIGHTEMPLAR,
     GATEWAYTRAIN_DARKTEMPLAR,
     GATEWAYTRAIN_SENTRY,
-    TRAIN_ADEPT
+    TRAIN_ADEPT,
 )
 
 from .ids.ability_id import (
@@ -27,7 +27,7 @@ from .ids.ability_id import (
     WARPGATETRAIN_HIGHTEMPLAR,
     WARPGATETRAIN_DARKTEMPLAR,
     WARPGATETRAIN_SENTRY,
-    TRAINWARP_ADEPT
+    TRAINWARP_ADEPT,
 )
 
 CreateGameError = enum.Enum("CreateGameError", sc_pb.ResponseCreateGame.Error.items())
@@ -50,16 +50,12 @@ TargetType = enum.Enum("TargetType", data_pb.Weapon.TargetType.items())
 
 ActionResult = enum.Enum("ActionResult", error_pb.ActionResult.items())
 
-race_worker = {
-    Race.Protoss: PROBE,
-    Race.Terran: SCV,
-    Race.Zerg: DRONE
-}
+race_worker = {Race.Protoss: PROBE, Race.Terran: SCV, Race.Zerg: DRONE}
 
 race_townhalls = {
     Race.Protoss: {NEXUS},
     Race.Terran: {COMMANDCENTER, ORBITALCOMMAND, PLANETARYFORTRESS},
-    Race.Zerg: {HATCHERY, LAIR, HIVE}
+    Race.Zerg: {HATCHERY, LAIR, HIVE},
 }
 
 warpgate_abilities = {
@@ -68,11 +64,7 @@ warpgate_abilities = {
     GATEWAYTRAIN_HIGHTEMPLAR: WARPGATETRAIN_HIGHTEMPLAR,
     GATEWAYTRAIN_DARKTEMPLAR: WARPGATETRAIN_DARKTEMPLAR,
     GATEWAYTRAIN_SENTRY: WARPGATETRAIN_SENTRY,
-    TRAIN_ADEPT: TRAINWARP_ADEPT
+    TRAIN_ADEPT: TRAINWARP_ADEPT,
 }
 
-race_gas = {
-    Race.Protoss: ASSIMILATOR,
-    Race.Terran: REFINERY,
-    Race.Zerg: EXTRACTOR
-}
+race_gas = {Race.Protoss: ASSIMILATOR, Race.Terran: REFINERY, Race.Zerg: EXTRACTOR}

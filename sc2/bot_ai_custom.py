@@ -22,20 +22,15 @@ from .ids.upgrade_id import UpgradeId
 from .units import Units
 
 
-class BotAI(object):
+class BotAI_custom(object):
     """Base class for bots."""
 
-    EXPANSION_GAP_THRESHOLD = 15
+    # EXPANSION_GAP_THRESHOLD = 15
 
-    def __init__(self):
-        # Specific opponent bot ID used in sc2ai ladder games http://sc2ai.net/
-        # The bot ID will stay the same each game so your bot can "adapt" to the opponent
-        self.opponent_id: int = None
-
-    @property
-    def enemy_race(self) -> Race:
-        self.enemy_id = 3 - self.player_id
-        return Race(self._game_info.player_races[self.enemy_id])
+    # @property
+    # def enemy_race(self) -> Race:
+    #     self.enemy_id = 3 - self.player_id
+    #     return Race(self._game_info.player_races[self.enemy_id])
 
     @property
     def time(self) -> Union[int, float]:
@@ -46,14 +41,14 @@ class BotAI(object):
     def game_info(self) -> "GameInfo":
         return self._game_info
 
-    @property
-    def start_location(self) -> Point2:
-        return self._game_info.player_start_location
+    # @property
+    # def start_location(self) -> Point2:
+    #     return self._game_info.player_start_location
 
-    @property
-    def enemy_start_locations(self) -> List[Point2]:
-        """Possible start locations for enemies."""
-        return self._game_info.start_locations
+    # @property
+    # def enemy_start_locations(self) -> List[Point2]:
+    #     """Possible start locations for enemies."""
+    #     return self._game_info.start_locations
 
     @property
     def known_enemy_units(self) -> Units:
@@ -108,17 +103,15 @@ class BotAI(object):
         return await self._client.query_available_abilities(units, ignore_resource_requirements)
 
     async def expand_now(
-        self, building: UnitTypeId = None, max_distance: Union[int, float] = 10, location: Optional[Point2] = None
+        self,
+        building: Optional[UnitTypeId] = None,
+        max_distance: Union[int, float] = 10,
+        location: Optional[Point2] = None,
     ):
         """Takes new expansion."""
 
         if not building:
-            if self.race == Race.Protoss:
-                building = UnitTypeId.NEXUS
-            elif self.race == Race.Terran:
-                building = UnitTypeId.COMMANDCENTER
-            elif self.race == Race.Zerg:
-                building = UnitTypeId.HATCHERY
+            building = self.townhalls.first.type_id
 
         assert isinstance(building, UnitTypeId)
 
@@ -165,14 +158,9 @@ class BotAI(object):
         expansion_locations = self.expansion_locations
         owned_expansions = self.owned_expansions
         worker_pool = []
-        main = list(owned_expansions.values())[0]
         for idle_worker in self.workers.idle:
-            mf_worker = self.state.mineral_field.closest_to(idle_worker)
-            mf_main = self.state.mineral_field.closest_to(main)
-            if idle_worker.distance_to(mf_worker) > 10:
-                await self.do(idle_worker.gather(mf_main))  # find a place to mine
-            else:
-                await self.do(idle_worker.gather(mf_worker))
+            mf = self.state.mineral_field.closest_to(idle_worker)
+            await self.do(idle_worker.gather(mf))
 
         for location, townhall in owned_expansions.items():
             workers = self.workers.closer_than(20, location)
@@ -237,26 +225,17 @@ class BotAI(object):
 
         return owned
 
-    def can_feed(self, unit_type: UnitTypeId) -> bool:
-        """ Checks if you have enough free supply to build the unit """
-        return self.supply_left >= self._game_data.units[unit_type.value]._proto.food_required
-
-    def can_afford(
-        self, item_id: Union[UnitTypeId, UpgradeId, AbilityId], check_supply_cost: bool = True
-    ) -> "CanAffordWrapper":
+    def can_afford(self, item_id: Union[UnitTypeId, UpgradeId, AbilityId]) -> "CanAffordWrapper":
         """Tests if the player has enough resources to build a unit or cast an ability."""
-        enough_supply = True
         if isinstance(item_id, UnitTypeId):
             unit = self._game_data.units[item_id.value]
             cost = self._game_data.calculate_ability_cost(unit.creation_ability)
-            if check_supply_cost:
-                enough_supply = self.can_feed(item_id)
         elif isinstance(item_id, UpgradeId):
             cost = self._game_data.upgrades[item_id.value].cost
         else:
             cost = self._game_data.calculate_ability_cost(item_id)
 
-        return CanAffordWrapper(cost.minerals <= self.minerals, cost.vespene <= self.vespene, enough_supply)
+        return CanAffordWrapper(cost.minerals <= self.minerals, cost.vespene <= self.vespene)
 
     async def can_cast(
         self,
@@ -438,7 +417,7 @@ class BotAI(object):
             return ActionResult.CantFindPlacementLocation
 
         unit = unit or self.select_build_worker(p)
-        if unit is None or not self.can_afford(building):
+        if unit is None:
             return ActionResult.Error
         return await self.do(unit.build(building, p))
 
@@ -484,8 +463,8 @@ class BotAI(object):
 
     def _prepare_first_step(self):
         """First step extra preparations. Must not be called before _prepare_step."""
-        assert len(self.townhalls) == 1
-        self._game_info.player_start_location = self.townhalls.first.position
+        if self.townhalls.amount == 1:
+            self._game_info.player_start_location = self.townhalls.first.position
 
     def _prepare_step(self, state):
         """Set attributes from new state before on_step."""
@@ -554,13 +533,12 @@ class BotAI(object):
 
 
 class CanAffordWrapper(object):
-    def __init__(self, can_afford_minerals, can_afford_vespene, have_enough_supply):
+    def __init__(self, can_afford_minerals, can_afford_vespene):
         self.can_afford_minerals = can_afford_minerals
         self.can_afford_vespene = can_afford_vespene
-        self.have_enough_supply = have_enough_supply
 
     def __bool__(self):
-        return self.can_afford_minerals and self.can_afford_vespene and self.have_enough_supply
+        return self.can_afford_minerals and self.can_afford_vespene
 
     @property
     def action_result(self):
@@ -568,7 +546,5 @@ class CanAffordWrapper(object):
             return ActionResult.NotEnoughVespene
         elif not self.can_afford_minerals:
             return ActionResult.NotEnoughMinerals
-        elif not self.have_enough_supply:
-            return ActionResult.NotEnoughFood
         else:
             return None
